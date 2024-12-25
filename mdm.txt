@@ -1,0 +1,129 @@
+#include <iostream>
+#include <fstream>
+#include <iomanip>
+#include <queue>
+#include <cmath>
+#include "LinkedList.hpp"
+#include "BST.hpp"
+
+using namespace std;
+
+// Helper function to print spaces
+void printSpaces(int n) {
+    for (int i = 0; i < n; ++i) std::cout << " ";
+}
+
+// Function to calculate tree height
+int getHeight(TreeNode* node) {
+    if (node == nullptr) return 0;
+    return 1 + std::max(getHeight(node->left), getHeight(node->right));
+}
+
+// Function to print tree level by level with branches
+void printLevel(TreeNode* node, int level, int indentSpace, bool isLeft) {
+    if (node == nullptr) return;
+    if (level == 1) {
+        std::cout << node->data;
+    } else if (level > 1) {
+        if (isLeft) printSpaces(indentSpace / 2);
+        printLevel(node->left, level - 1, indentSpace / 2, true);
+        printSpaces(indentSpace);
+        printLevel(node->right, level - 1, indentSpace / 2, false);
+        if (!isLeft) printSpaces(indentSpace / 2);
+    }
+}
+
+// Function to print branches for tree
+void printBranches(int level, int indentSpace) {
+    int nodes = pow(2, level - 1);
+    int spacing = indentSpace / 2;
+
+    for (int i = 0; i < nodes; ++i) {
+        printSpaces(spacing - 1);
+        std::cout << "/ \\";
+        printSpaces(spacing - 1);
+    }
+    std::cout << std::endl;
+}
+
+// Function to print the entire tree
+void printTree(TreeNode* root) {
+    int h = getHeight(root);
+    int indentSpace = pow(2, h) * 2 - 1;
+
+    for (int i = 1; i <= h; i++) {
+        printSpaces(indentSpace / 2);
+        printLevel(root, i, indentSpace / 2, true);
+        std::cout << std::endl;
+        if (i != h) printBranches(i, indentSpace);
+        indentSpace /= 2;
+    }
+}
+
+int main() {
+    std::ifstream inputFile("./doc/agaclar.txt");
+    if (!inputFile) {
+        std::cerr << "Error: Could not open agacalar.txt" << std::endl;
+        return 1;
+    }
+
+    LinkedList treeList;
+    std::string line;
+    while (std::getline(inputFile, line)) {
+        if (line.empty()) continue; // Skip empty lines
+
+        BinarySearchTree<char>* bst = new BinarySearchTree<char>();
+        bst->insert(line[0]);
+        for (size_t i = 1; i < line.size(); i++) {
+            bst->insert(line[i]);
+        }
+
+        treeList.addTree(bst);
+    }
+
+    inputFile.close();
+
+    // Interactive traversal and operations
+    ListNode* currentNode = treeList.getHead();
+    char choice;
+
+    while (true) {
+        std::cout << "\nCurrent Tree: \n";
+        if (currentNode != nullptr) {
+            printTree(currentNode->bst->root);
+        } else {
+            std::cout << "No Tree Selected\n";
+        }
+
+        std::cout << "\nOptions: \n";
+        std::cout << "a: Previous Tree\nd: Next Tree\ns: Delete Current Tree\nw: Mirror Current Tree\nq: Quit\n";
+        std::cout << "Enter choice: ";
+
+        choice = _getch();
+        std::cout << choice << std::endl;
+
+        if (choice == 'q') {
+            break;
+        } else if (choice == 'a') {
+            currentNode = treeList.getPreviousNode(currentNode);
+        } else if (choice == 'd') {
+            if (currentNode != nullptr && currentNode->next != nullptr) {
+                currentNode = currentNode->next;
+            }
+        } else if (choice == 's') {
+            if (currentNode != nullptr) {
+                ListNode* temp = currentNode;
+                currentNode = currentNode->next;
+                treeList.deleteNode(temp);
+            }
+        } else if (choice == 'w') {
+            if (currentNode != nullptr) {
+                currentNode->bst->mirror();
+            }
+        } else {
+            std::cout << "Invalid choice.\n";
+        }
+    }
+
+    return 0;
+}
